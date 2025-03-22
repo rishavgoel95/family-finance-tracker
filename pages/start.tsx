@@ -12,11 +12,11 @@ export default function Start() {
           <button style={{ marginRight: '1rem' }}>📂 View My Trackers</button>
         </Link>
         <Link href="/invite">
-          <button>🔗 Join a Tracker</button>
+          <button style={{ marginRight: '1rem' }}>🔗 Join a Tracker</button>
         </Link>
         <Link href="/create-tracker">
-  <button>🆕 Create New Tracker</button>
-</Link>
+          <button>🆕 Create New Tracker</button>
+        </Link>
       </div>
     </div>
   );
