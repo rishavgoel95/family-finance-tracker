@@ -14,6 +14,9 @@ export default function Start() {
         <Link href="/invite">
           <button>🔗 Join a Tracker</button>
         </Link>
+        <Link href="/create-tracker">
+  <button>🆕 Create New Tracker</button>
+</Link>
       </div>
     </div>
   );
