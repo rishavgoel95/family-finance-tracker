@@ -1,11 +1,14 @@
-// ✅ File: pages/dashboard.tsx (updated)
+// ✅ File: pages/dashboard.tsx (updated to use selected tracker)
 
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import AddForm from '../components/AddForm';
 import Trends from '../components/Trends';
+import ExportData from '../components/ExportData';
+import { useActiveTracker } from '../lib/useActiveTracker';
 
 export default function Dashboard() {
+  const { trackerId } = useActiveTracker();
   const [income, setIncome] = useState(0);
   const [expenses, setExpenses] = useState(0);
   const [goal, setGoal] = useState({ title: '', target_amount: 0, saved_amount: 0 });
@@ -15,32 +18,22 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchData = async () => {
       const user = (await supabase.auth.getUser()).data.user;
-      if (!user) return;
-
-      const { data: profileData } = await supabase
-        .from('user_profiles')
-        .select('profile_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!profileData) return;
-
-      const profile_id = profileData.profile_id;
+      if (!user || !trackerId) return;
 
       const { data: incomeData } = await supabase
         .from('income')
         .select('amount')
-        .eq('profile_id', profile_id);
+        .eq('profile_id', trackerId);
 
       const { data: expenseData } = await supabase
         .from('expenses')
         .select('amount')
-        .eq('profile_id', profile_id);
+        .eq('profile_id', trackerId);
 
       const { data: goalData } = await supabase
         .from('goals')
         .select('*')
-        .eq('profile_id', profile_id)
+        .eq('profile_id', trackerId)
         .limit(1)
         .single();
 
@@ -55,7 +48,9 @@ export default function Dashboard() {
     };
 
     fetchData();
-  }, [showForm]);
+  }, [showForm, trackerId]);
+
+  if (!trackerId) return <p style={{ padding: '2rem' }}>⚠️ No tracker selected. Go to /trackers to select one.</p>;
 
   return (
     <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
@@ -69,6 +64,7 @@ export default function Dashboard() {
       </button>
       {showForm && <AddForm />}
       <Trends />
+      <ExportData />
     </div>
   );
 }
