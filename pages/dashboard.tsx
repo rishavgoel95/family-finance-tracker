@@ -1,14 +1,14 @@
-// ✅ File: pages/dashboard.tsx (updated to use selected tracker)
-
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import AddForm from '../components/AddForm';
 import Trends from '../components/Trends';
 import ExportData from '../components/ExportData';
 import { useActiveTracker } from '../lib/useActiveTracker';
+import { useRouter } from 'next/router';
 
 export default function Dashboard() {
   const { trackerId } = useActiveTracker();
+  const router = useRouter();
   const [income, setIncome] = useState(0);
   const [expenses, setExpenses] = useState(0);
   const [goal, setGoal] = useState({ title: '', target_amount: 0, saved_amount: 0 });
@@ -50,11 +50,20 @@ export default function Dashboard() {
     fetchData();
   }, [showForm, trackerId]);
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    localStorage.removeItem('activeTracker');
+    router.push('/');
+  };
+
   if (!trackerId) return <p style={{ padding: '2rem' }}>⚠️ No tracker selected. Go to /trackers to select one.</p>;
 
   return (
     <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
-      <h1 style={{ fontSize: '1.8rem', marginBottom: '1rem' }}>📊 Family Dashboard</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1 style={{ fontSize: '1.8rem' }}>📊 Family Dashboard</h1>
+        <button onClick={handleLogout}>🚪 Logout</button>
+      </div>
       <div style={{ marginBottom: '1rem' }}>💰 <strong>Income:</strong> ₹{income.toLocaleString()}</div>
       <div style={{ marginBottom: '1rem' }}>🧾 <strong>Expenses:</strong> ₹{expenses.toLocaleString()}</div>
       <div style={{ marginBottom: '1rem' }}>🏁 <strong>Goal:</strong> {goal.title} – {Math.round((goal.saved_amount / goal.target_amount) * 100 || 0)}% complete</div>
