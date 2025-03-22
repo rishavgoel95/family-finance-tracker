@@ -1,10 +1,10 @@
-// ✅ File: components/TrackersList.tsx (fetch and display owned + shared trackers)
-
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { useActiveTracker } from '../lib/useActiveTracker';
 
 export default function TrackersList() {
   const [trackers, setTrackers] = useState([]);
+  const { trackerId, selectTracker } = useActiveTracker();
 
   useEffect(() => {
     const fetchTrackers = async () => {
@@ -29,6 +29,12 @@ export default function TrackersList() {
           <h3>{tracker.profiles?.name || 'Unnamed Tracker'}</h3>
           <p>Role: {tracker.role}</p>
           <p>ID: {tracker.profile_id}</p>
+          <button
+            onClick={() => selectTracker(tracker.profile_id)}
+            style={{ marginTop: '0.5rem' }}
+          >
+            {trackerId === tracker.profile_id ? '✅ Selected' : '🎯 Select This Tracker'}
+          </button>
         </div>
       ))}
     </div>
