@@ -1,11 +1,15 @@
+// ✅ File: pages/dashboard.tsx (updated with AddForm)
+
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import AddForm from '../components/AddForm';
 
 export default function Dashboard() {
   const [income, setIncome] = useState(0);
   const [expenses, setExpenses] = useState(0);
   const [goal, setGoal] = useState({ title: '', target_amount: 0, saved_amount: 0 });
   const [netWorth, setNetWorth] = useState(0);
+  const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -50,7 +54,7 @@ export default function Dashboard() {
     };
 
     fetchData();
-  }, []);
+  }, [showForm]);
 
   return (
     <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
@@ -59,6 +63,10 @@ export default function Dashboard() {
       <div style={{ marginBottom: '1rem' }}>🧾 <strong>Expenses:</strong> ₹{expenses.toLocaleString()}</div>
       <div style={{ marginBottom: '1rem' }}>🏁 <strong>Goal:</strong> {goal.title} – {Math.round((goal.saved_amount / goal.target_amount) * 100 || 0)}% complete</div>
       <div style={{ marginBottom: '1rem' }}>💼 <strong>Net Worth:</strong> ₹{netWorth.toLocaleString()}</div>
+      <button onClick={() => setShowForm(!showForm)} style={{ marginTop: '1rem', padding: '0.5rem 1rem' }}>
+        {showForm ? 'Close' : '➕ Add New Entry'}
+      </button>
+      {showForm && <AddForm />}
     </div>
   );
 }
