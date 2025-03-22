@@ -1,8 +1,9 @@
-// ✅ File: pages/dashboard.tsx (updated with AddForm)
+// ✅ File: pages/dashboard.tsx (updated)
 
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import AddForm from '../components/AddForm';
+import Trends from '../components/Trends';
 
 export default function Dashboard() {
   const [income, setIncome] = useState(0);
@@ -67,6 +68,7 @@ export default function Dashboard() {
         {showForm ? 'Close' : '➕ Add New Entry'}
       </button>
       {showForm && <AddForm />}
+      <Trends />
     </div>
   );
 }
