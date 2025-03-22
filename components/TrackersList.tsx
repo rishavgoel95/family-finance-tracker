@@ -1,3 +1,5 @@
+// ✅ File: components/TrackersList.tsx (updated to support switching trackers)
+
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useActiveTracker } from '../lib/useActiveTracker';
