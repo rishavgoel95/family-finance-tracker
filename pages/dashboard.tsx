@@ -5,6 +5,7 @@ import Trends from '../components/Trends';
 import ExportData from '../components/ExportData';
 import { useActiveTracker } from '../lib/useActiveTracker';
 import { useRouter } from 'next/router';
+import Reminders from '../components/Reminders';
 
 export default function Dashboard() {
   const { trackerId } = useActiveTracker();
@@ -72,6 +73,7 @@ export default function Dashboard() {
         {showForm ? 'Close' : '➕ Add New Entry'}
       </button>
       {showForm && <AddForm />}
+      <Reminders />
       <Trends />
       <ExportData />
     </div>
