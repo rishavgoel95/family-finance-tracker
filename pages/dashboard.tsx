@@ -6,6 +6,7 @@ import ExportData from '../components/ExportData';
 import { useActiveTracker } from '../lib/useActiveTracker';
 import { useRouter } from 'next/router';
 import Reminders from '../components/Reminders';
+import CalendarView from '../components/CalendarView';
 
 export default function Dashboard() {
   const { trackerId } = useActiveTracker();
@@ -74,6 +75,7 @@ export default function Dashboard() {
       </button>
       {showForm && <AddForm />}
       <Reminders />
+      <CalendarView />
       <Trends />
       <ExportData />
     </div>
