@@ -33,6 +33,12 @@ export default function CategoriesPage() {
       setNewCat('');
       setEmoji('');
       alert('Category added!');
+      const { data } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('profile_id', trackerId)
+        .order('created_at', { ascending: true });
+      setCategories(data || []);
     }
   };
 
@@ -44,7 +50,7 @@ export default function CategoriesPage() {
   return (
     <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
       <h1>🗂 Manage Categories</h1>
-      <div>
+      <div style={{ marginBottom: '1rem' }}>
         <input
           type="text"
           placeholder="Category name"
@@ -63,11 +69,14 @@ export default function CategoriesPage() {
         </button>
       </div>
 
-      <ul style={{ marginTop: '1rem' }}>
+      <ul>
         {categories.map((cat) => (
           <li key={cat.id} style={{ marginBottom: '0.5rem' }}>
             {cat.emoji || '🟦'} {cat.name}
-            <button onClick={() => handleDelete(cat.id)} style={{ marginLeft: '1rem' }}>
+            <button
+              onClick={() => handleDelete(cat.id)}
+              style={{ marginLeft: '1rem' }}
+            >
               ❌ Delete
             </button>
           </li>
