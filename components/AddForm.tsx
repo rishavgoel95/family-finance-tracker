@@ -12,13 +12,25 @@ export default function AddForm() {
   const [categories, setCategories] = useState<string[]>([]);
 
   useEffect(() => {
-    // You can replace this with a fetch from a categories table later
-    setCategories(['Groceries', 'Utilities', 'Rent', 'Dining Out', 'Travel']);
-  }, []);
+    const fetchCategories = async () => {
+      if (!trackerId) return;
+      const { data } = await supabase
+        .from('categories')
+        .select('name')
+        .eq('profile_id', trackerId);
+      if (data) {
+        setCategories(data.map((cat) => cat.name));
+      } else {
+        setCategories(['Groceries', 'Utilities', 'Rent', 'Dining Out', 'Travel']); // fallback default
+      }
+    };
+
+    fetchCategories();
+  }, [trackerId]);
 
   const handleSubmit = async () => {
     const user = (await supabase.auth.getUser()).data.user;
-    if (!user || !trackerId) return;
+    if (!user || !trackerId || !amount) return;
 
     const table = type === 'expense' ? 'expenses' : type === 'income' ? 'income' : 'goals';
 
@@ -33,7 +45,6 @@ export default function AddForm() {
     if (type === 'expense') {
       payload.category = category;
 
-      // ✅ Upload receipt file if selected
       if (receipt) {
         const filePath = `receipts/${Date.now()}_${receipt.name}`;
         const { data: uploadData, error: uploadError } = await supabase.storage
@@ -41,7 +52,7 @@ export default function AddForm() {
           .upload(filePath, receipt);
 
         if (!uploadError) {
-          payload.receipt_url = uploadData.path;
+          payload.receipt_url = uploadData?.path;
         } else {
           alert('Receipt upload failed: ' + uploadError.message);
         }
@@ -89,7 +100,7 @@ export default function AddForm() {
       />
       <br />
 
-      {/* ✅ Category Selector for Expense */}
+      {/* Category and receipt only apply to expenses */}
       {type === 'expense' && (
         <>
           <select value={category} onChange={(e) => setCategory(e.target.value)} style={{ marginTop: '0.5rem' }}>
