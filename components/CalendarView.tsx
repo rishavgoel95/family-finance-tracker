@@ -7,6 +7,7 @@ interface Entry {
   amount: number;
   date: string;
   note?: string;
+  receipt_url?: string;
 }
 
 export default function CalendarView() {
@@ -19,8 +20,15 @@ export default function CalendarView() {
       if (!user || !trackerId) return;
 
       const [incomeRes, expenseRes] = await Promise.all([
-        supabase.from('income').select('amount, note, date').eq('profile_id', trackerId),
-        supabase.from('expenses').select('amount, note, date').eq('profile_id', trackerId),
+        supabase
+          .from('income')
+          .select('amount, note, date')
+          .eq('profile_id', trackerId),
+
+        supabase
+          .from('expenses')
+          .select('amount, note, date, receipt_url')
+          .eq('profile_id', trackerId),
       ]);
 
       const income = (incomeRes.data || []).map(i => ({ ...i, type: 'income' as const }));
@@ -47,6 +55,18 @@ export default function CalendarView() {
           {grouped[date].map((e, idx) => (
             <div key={idx} style={{ paddingLeft: '1rem' }}>
               {e.type === 'income' ? '💰' : '🧾'} ₹{e.amount.toLocaleString()} — {e.note || ''}
+              {e.type === 'expense' && e.receipt_url && (
+                <>
+                  {' '}
+                  | <a
+                    href={`https://kqqzwptkpljqosgtbtlb.supabase.co/storage/v1/object/public/receipts/${e.receipt_url}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    📎 View Receipt
+                  </a>
+                </>
+              )}
             </div>
           ))}
         </div>
