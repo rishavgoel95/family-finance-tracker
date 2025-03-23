@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useActiveTracker } from '../lib/useActiveTracker';
+import imageCompression from 'browser-image-compression';
 
 export default function AddForm() {
   const { trackerId } = useActiveTracker();
@@ -21,7 +22,7 @@ export default function AddForm() {
       if (data) {
         setCategories(data.map((cat) => cat.name));
       } else {
-        setCategories(['Groceries', 'Utilities', 'Rent', 'Dining Out', 'Travel']); // fallback default
+        setCategories(['Groceries', 'Utilities', 'Rent', 'Dining Out', 'Travel']); // fallback
       }
     };
 
@@ -46,15 +47,26 @@ export default function AddForm() {
       payload.category = category;
 
       if (receipt) {
-        const filePath = `receipts/${Date.now()}_${receipt.name}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('receipts')
-          .upload(filePath, receipt);
+        try {
+          const compressed = await imageCompression(receipt, {
+            maxSizeMB: 0.5,
+            maxWidthOrHeight: 1024,
+            useWebWorker: true,
+          });
 
-        if (!uploadError) {
-          payload.receipt_url = uploadData?.path;
-        } else {
-          alert('Receipt upload failed: ' + uploadError.message);
+          const filePath = `receipts/${Date.now()}_${compressed.name}`;
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('receipts')
+            .upload(filePath, compressed);
+
+          if (!uploadError && uploadData?.path) {
+            payload.receipt_url = uploadData.path;
+          } else {
+            alert('Receipt upload failed: ' + uploadError?.message);
+          }
+        } catch (err) {
+          console.error('Compression error:', err);
+          alert('Image compression failed.');
         }
       }
     }
@@ -100,7 +112,6 @@ export default function AddForm() {
       />
       <br />
 
-      {/* Category and receipt only apply to expenses */}
       {type === 'expense' && (
         <>
           <select value={category} onChange={(e) => setCategory(e.target.value)} style={{ marginTop: '0.5rem' }}>
@@ -110,7 +121,12 @@ export default function AddForm() {
             ))}
           </select>
           <br />
-          <input type="file" onChange={(e) => setReceipt(e.target.files?.[0] || null)} style={{ marginTop: '0.5rem' }} />
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setReceipt(e.target.files?.[0] || null)}
+            style={{ marginTop: '0.5rem' }}
+          />
         </>
       )}
 
