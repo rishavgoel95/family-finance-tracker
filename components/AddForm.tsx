@@ -10,19 +10,19 @@ export default function AddForm() {
   const [note, setNote] = useState('');
   const [category, setCategory] = useState('');
   const [receipt, setReceipt] = useState<File | null>(null);
-  const [categories, setCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState<{ name: string; emoji: string }[]>([]);
 
   useEffect(() => {
     const fetchCategories = async () => {
       if (!trackerId) return;
       const { data } = await supabase
         .from('categories')
-        .select('name')
+        .select('name, emoji')
         .eq('profile_id', trackerId);
       if (data) {
-        setCategories(data.map((cat) => cat.name));
+        setCategories(data);
       } else {
-        setCategories(['Groceries', 'Utilities', 'Rent', 'Dining Out', 'Travel']); // fallback
+        setCategories([]);
       }
     };
 
@@ -114,10 +114,16 @@ export default function AddForm() {
 
       {type === 'expense' && (
         <>
-          <select value={category} onChange={(e) => setCategory(e.target.value)} style={{ marginTop: '0.5rem' }}>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            style={{ marginTop: '0.5rem' }}
+          >
             <option value="">Select Category</option>
             {categories.map((cat) => (
-              <option key={cat} value={cat}>{cat}</option>
+              <option key={cat.name} value={cat.name}>
+                {cat.emoji || '🟦'} {cat.name}
+              </option>
             ))}
           </select>
           <br />
