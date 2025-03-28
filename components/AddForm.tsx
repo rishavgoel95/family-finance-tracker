@@ -21,8 +21,6 @@ export default function AddForm() {
         .eq('profile_id', trackerId);
       if (data) {
         setCategories(data);
-      } else {
-        setCategories([]);
       }
     };
 
@@ -33,59 +31,58 @@ export default function AddForm() {
     const user = (await supabase.auth.getUser()).data.user;
     if (!user || !trackerId || !amount) return;
 
-    const table = type === 'expense' ? 'expenses' : type === 'income' ? 'income' : 'goals';
+    let receipt_url: string | undefined = undefined;
 
-    const payload: any = {
-      profile_id: trackerId,
-      user_id: user.id,
-      amount: parseFloat(amount),
-      note,
-      date: new Date().toISOString().split('T')[0],
-    };
+    if (type === 'expense' && receipt) {
+      try {
+        const compressed = await imageCompression(receipt, {
+          maxSizeMB: 0.5,
+          maxWidthOrHeight: 1024,
+          useWebWorker: true,
+        });
 
-    if (type === 'expense') {
-      payload.category = category;
+        const filePath = `receipts/${Date.now()}_${compressed.name}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('receipts')
+          .upload(filePath, compressed);
 
-      if (receipt) {
-        try {
-          const compressed = await imageCompression(receipt, {
-            maxSizeMB: 0.5,
-            maxWidthOrHeight: 1024,
-            useWebWorker: true,
-          });
-
-          const filePath = `receipts/${Date.now()}_${compressed.name}`;
-          const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('receipts')
-            .upload(filePath, compressed);
-
-          if (!uploadError && uploadData?.path) {
-            payload.receipt_url = uploadData.path;
-          } else {
-            alert('Receipt upload failed: ' + uploadError?.message);
-          }
-        } catch (err) {
-          console.error('Compression error:', err);
-          alert('Image compression failed.');
+        if (!uploadError && uploadData?.path) {
+          receipt_url = uploadData.path;
+        } else {
+          alert('Receipt upload failed: ' + uploadError?.message);
         }
+      } catch (err) {
+        console.error('Compression error:', err);
+        alert('Image compression failed.');
       }
     }
 
-    if (type === 'goals') {
-      payload.title = note;
-      payload.target_amount = parseFloat(amount);
-      payload.saved_amount = 0;
-    }
+    const response = await fetch('/api/entry', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: user.id,
+        tracker_id: trackerId,
+        type,
+        amount: parseFloat(amount),
+        note,
+        category,
+        receipt_url,
+        title: type === 'goals' ? note : undefined,
+        target_amount: type === 'goals' ? parseFloat(amount) : undefined,
+      }),
+    });
 
-    const { error } = await supabase.from(table).insert([payload]);
-    if (error) {
-      alert('Error saving data: ' + error.message);
-    } else {
+    const result = await response.json();
+
+    if (response.ok) {
       alert('Saved!');
       setAmount('');
       setNote('');
       setCategory('');
       setReceipt(null);
+    } else {
+      alert('Error: ' + result.error);
     }
   };
 
