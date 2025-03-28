@@ -13,6 +13,11 @@ interface Entry {
 export default function CalendarView() {
   const { trackerId } = useActiveTracker();
   const [entries, setEntries] = useState<Entry[]>([]);
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
+  const [expandedDates, setExpandedDates] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const fetchEntries = async () => {
@@ -24,7 +29,6 @@ export default function CalendarView() {
           .from('income')
           .select('amount, note, date')
           .eq('profile_id', trackerId),
-
         supabase
           .from('expenses')
           .select('amount, note, date, receipt_url')
@@ -40,35 +44,66 @@ export default function CalendarView() {
     fetchEntries();
   }, [trackerId]);
 
-  const grouped = entries.reduce((acc, entry) => {
+  const filteredEntries = entries.filter(entry =>
+    entry.date.startsWith(selectedMonth)
+  );
+
+  const grouped = filteredEntries.reduce((acc, entry) => {
     if (!acc[entry.date]) acc[entry.date] = [];
     acc[entry.date].push(entry);
     return acc;
   }, {} as Record<string, Entry[]>);
 
+  const toggleDate = (date: string) => {
+    setExpandedDates((prev) => ({
+      ...prev,
+      [date]: !prev[date],
+    }));
+  };
+
   return (
-    <div style={{ marginTop: '3rem' }}>
+    <div style={{ marginTop: '2rem' }}>
       <h2>📅 Calendar View</h2>
+
+      <label style={{ marginBottom: '1rem', display: 'block' }}>
+        📅 Select Month:{' '}
+        <input
+          type="month"
+          value={selectedMonth}
+          onChange={(e) => setSelectedMonth(e.target.value)}
+        />
+      </label>
+
       {Object.keys(grouped).map(date => (
         <div key={date} style={{ marginBottom: '1rem' }}>
-          <strong>{date}</strong>
-          {grouped[date].map((e, idx) => (
-            <div key={idx} style={{ paddingLeft: '1rem' }}>
-              {e.type === 'income' ? '💰' : '🧾'} ₹{e.amount.toLocaleString()} — {e.note || ''}
-              {e.type === 'expense' && e.receipt_url && (
-                <>
-                  {' '}
-                  | <a
-                    href={`https://kqqzwptkpljqosgtbtlb.supabase.co/storage/v1/object/public/receipts/${e.receipt_url}`}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    📎 View Receipt
-                  </a>
-                </>
-              )}
+          <strong
+            onClick={() => toggleDate(date)}
+            style={{ cursor: 'pointer', color: '#0070f3' }}
+          >
+            {expandedDates[date] ? '▼' : '▶'} {date}
+          </strong>
+
+          {expandedDates[date] && (
+            <div>
+              {grouped[date].map((e, idx) => (
+                <div key={idx} style={{ paddingLeft: '1.5rem' }}>
+                  {e.type === 'income' ? '💰' : '🧾'} ₹{e.amount.toLocaleString()} — {e.note || ''}
+                  {e.type === 'expense' && e.receipt_url && (
+                    <>
+                      {' '}
+                      | <a
+                        href={`https://kqqzwptkpljqosgtbtlb.supabase.co/storage/v1/object/public/receipts/${e.receipt_url}`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        📎 View Receipt
+                      </a>
+                    </>
+                  )}
+                </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
       ))}
     </div>
