@@ -1,4 +1,5 @@
 import CalendarView from '../components/CalendarView';
+import BottomNavBar from '../components/BottomNavBar';
 import { useEffect, useState } from 'react';
 import { useActiveTracker } from '../lib/useActiveTracker';
 import Link from 'next/link';
