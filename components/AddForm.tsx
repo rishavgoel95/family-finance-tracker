@@ -12,20 +12,26 @@ export default function AddForm() {
   const [receipt, setReceipt] = useState<File | null>(null);
   const [categories, setCategories] = useState<{ name: string; emoji: string }[]>([]);
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      if (!trackerId) return;
-      const { data } = await supabase
-        .from('categories')
-        .select('name, emoji')
-        .eq('profile_id', trackerId);
-      if (data) {
-        setCategories(data);
-      }
-    };
+useEffect(() => {
+  const fetchCategories = async () => {
+    if (!trackerId) return;
 
-    fetchCategories();
-  }, [trackerId]);
+    const res = await fetch('/api/categories', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tracker_id: trackerId }),
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      setCategories(data);
+    } else {
+      alert('Failed to load categories');
+    }
+  };
+
+  fetchCategories();
+}, [trackerId]);
 
   const handleSubmit = async () => {
     const user = (await supabase.auth.getUser()).data.user;
@@ -111,18 +117,19 @@ export default function AddForm() {
 
       {type === 'expense' && (
         <>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            style={{ marginTop: '0.5rem' }}
-          >
-            <option value="">Select Category</option>
-            {categories.map((cat) => (
-              <option key={cat.name} value={cat.name}>
-                {cat.emoji || '🟦'} {cat.name}
-              </option>
-            ))}
-          </select>
+<select
+  value={category}
+  onChange={(e) => setCategory(e.target.value)}
+  style={{ marginTop: '0.5rem' }}
+>
+  <option value="">Select Category</option>
+  {categories.map((cat) => (
+    <option key={cat.name} value={cat.name}>
+      {cat.emoji || '🟦'} {cat.name}
+    </option>
+  ))}
+</select>
+
           <br />
           <input
             type="file"
