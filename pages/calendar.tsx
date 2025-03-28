@@ -17,6 +17,7 @@ export default function CalendarPage() {
     <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
       <h1>📅 Calendar View</h1>
       <CalendarView />
+<BottomNavBar />
     </div>
   );
 }
