@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import AddForm from '../components/AddForm';
+import Charts from '../components/Charts';
 import Trends from '../components/Trends';
 import ExportData from '../components/ExportData';
 import Reminders from '../components/Reminders';
@@ -86,6 +87,7 @@ export default function Dashboard() {
       {showForm && <AddForm />}
       <Reminders />
       <CalendarView />
+<Charts />
       <Trends />
       <ExportData />
     </div>
