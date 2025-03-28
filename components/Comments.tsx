@@ -1,80 +1,64 @@
-import { useState, useEffect, useRef } from 'react';
-import { useActiveTracker } from '../lib/useActiveTracker';
+import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { useActiveTracker } from '../lib/useActiveTracker';
 
 export default function Comments() {
   const { trackerId } = useActiveTracker();
   const [comments, setComments] = useState([]);
-  const [message, setMessage] = useState('');
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const [newComment, setNewComment] = useState('');
 
-  useEffect(() => {
+  const fetchComments = async () => {
     if (!trackerId) return;
 
-    const fetchComments = async () => {
-      const { data } = await supabase
-        .from('comments')
-        .select('id, message, user_id, created_at')
-        .eq('profile_id', trackerId)
-        .order('created_at', { ascending: true });
-
-      setComments(data || []);
-    };
-
-    fetchComments();
-  }, [trackerId]);
-
-  const handleSend = async () => {
-    const user = (await supabase.auth.getUser()).data.user;
-    if (!user || !trackerId || !message.trim()) return;
-
-    const { error } = await supabase.from('comments').insert({
-      profile_id: trackerId,
-      user_id: user.id,
-      message,
-    });
-
-    if (!error) {
-      setMessage('');
-      const updated = await supabase
-        .from('comments')
-        .select('id, message, user_id, created_at')
-        .eq('profile_id', trackerId)
-        .order('created_at', { ascending: true });
-      setComments(updated.data || []);
-    }
+    const res = await fetch(`/api/comments?trackerId=${trackerId}`);
+    const data = await res.json();
+    if (res.ok) setComments(data);
   };
 
   useEffect(() => {
-    if (bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [comments]);
+    fetchComments();
+    const interval = setInterval(fetchComments, 5000);
+    return () => clearInterval(interval);
+  }, [trackerId]);
+
+  const postComment = async () => {
+    const user = (await supabase.auth.getUser()).data.user;
+    if (!newComment.trim() || !user) return;
+
+    await fetch('/api/comments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        trackerId,
+        userId: user.id,
+        message: newComment,
+      }),
+    });
+
+    setNewComment('');
+    fetchComments();
+  };
 
   return (
-    <div style={{ marginTop: '2rem', maxWidth: '600px' }}>
-      <h3>💬 Team Notes</h3>
-      <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #ccc', padding: '1rem', borderRadius: '8px' }}>
-        {comments.map((c) => (
-          <div key={c.id} style={{ marginBottom: '0.5rem' }}>
-            <div style={{ fontSize: '0.85rem', color: '#888' }}>{new Date(c.created_at).toLocaleString()}</div>
-            <div>{c.message}</div>
+    <div className="p-4 bg-gray-50 rounded shadow-md my-4">
+      <h2 className="font-bold mb-2">💬 Comments</h2>
+      <div className="h-48 overflow-auto mb-2 bg-white p-2 rounded">
+        {comments.map((comment) => (
+          <div key={comment.id} className="mb-2">
+            <strong>{comment.users.display_name}:</strong> {comment.message}
+            <small className="block text-gray-400">{new Date(comment.created_at).toLocaleString()}</small>
           </div>
         ))}
-        <div ref={bottomRef} />
       </div>
-      <div style={{ marginTop: '1rem' }}>
-        <input
-          type="text"
-          value={message}
-          placeholder="Write a comment..."
-          onChange={(e) => setMessage(e.target.value)}
-          style={{ padding: '0.5rem', width: '80%' }}
-        />
-        <button onClick={handleSend} style={{ marginLeft: '0.5rem' }}>
-          Send
-        </button>
-      </div>
+      <input
+        className="border p-2 w-full rounded"
+        value={newComment}
+        onChange={(e) => setNewComment(e.target.value)}
+        placeholder="Add a comment..."
+      />
+      <button onClick={postComment} className="mt-2 bg-blue-500 text-white py-2 px-4 rounded">
+        Send
+      </button>
     </div>
   );
 }
