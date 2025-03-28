@@ -8,21 +8,29 @@ export default function Reminders() {
   const [title, setTitle] = useState('');
   const [dueDate, setDueDate] = useState('');
 
+  const fetchReminders = async () => {
+    const user = (await supabase.auth.getUser()).data.user;
+    if (!user || !trackerId) return;
+
+    const res = await fetch('/api/reminders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tracker_id: trackerId, user_id: user.id }),
+    });
+
+    const getRes = await fetch('/api/reminders', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tracker_id: trackerId, user_id: user.id }),
+    });
+
+    const data = await getRes.json();
+    if (getRes.ok) {
+      setReminders(data);
+    }
+  };
+
   useEffect(() => {
-    const fetchReminders = async () => {
-      const user = (await supabase.auth.getUser()).data.user;
-      if (!user || !trackerId) return;
-
-      const { data } = await supabase
-        .from('reminders')
-        .select('*')
-        .eq('profile_id', trackerId)
-        .gte('due_date', new Date().toISOString().split('T')[0])
-        .order('due_date', { ascending: true });
-
-      setReminders(data || []);
-    };
-
     fetchReminders();
   }, [trackerId]);
 
@@ -30,28 +38,38 @@ export default function Reminders() {
     const user = (await supabase.auth.getUser()).data.user;
     if (!user || !trackerId || !title || !dueDate) return;
 
-    const { error } = await supabase.from('reminders').insert({
-      profile_id: trackerId,
-      user_id: user.id,
-      title,
-      due_date: dueDate,
+    const res = await fetch('/api/reminders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tracker_id: trackerId,
+        user_id: user.id,
+        title,
+        due_date: dueDate,
+      }),
     });
 
-    if (!error) {
+    if (res.ok) {
       setTitle('');
       setDueDate('');
+      await fetchReminders();
       alert('Reminder added!');
+    } else {
+      const err = await res.json();
+      alert('Error: ' + err.error);
     }
   };
 
   return (
     <div style={{ marginTop: '2rem' }}>
       <h2>⏰ Upcoming Reminders</h2>
+
       {reminders.map((r) => (
         <div key={r.id} style={{ marginBottom: '0.5rem' }}>
           📌 <strong>{r.title}</strong> — due on {r.due_date}
         </div>
       ))}
+
       <div style={{ marginTop: '1rem' }}>
         <input
           type="text"
