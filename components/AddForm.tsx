@@ -1,148 +1,89 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
-import { useActiveTracker } from '../lib/useActiveTracker';
+import { useState } from 'react';
 import imageCompression from 'browser-image-compression';
+import { useActiveTracker } from '../lib/useActiveTracker';
 
 export default function AddForm() {
   const { trackerId } = useActiveTracker();
-  const [type, setType] = useState('expense');
   const [amount, setAmount] = useState('');
-  const [note, setNote] = useState('');
   const [category, setCategory] = useState('');
+  const [note, setNote] = useState('');
   const [receipt, setReceipt] = useState<File | null>(null);
-  const [categories, setCategories] = useState<{ name: string; emoji: string }[]>([]);
-
-useEffect(() => {
-  const fetchCategories = async () => {
-    if (!trackerId) return;
-
-    const res = await fetch('/api/categories', {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tracker_id: trackerId }),
-    });
-
-    const data = await res.json();
-    if (res.ok) {
-      setCategories(data);
-    } else {
-      alert('Failed to load categories');
-    }
-  };
-
-  fetchCategories();
-}, [trackerId]);
 
   const handleSubmit = async () => {
-    const user = (await supabase.auth.getUser()).data.user;
-    if (!user || !trackerId || !amount) return;
+    if (!trackerId || !amount || !category) return;
 
-    let receipt_url: string | undefined = undefined;
+    let receipt_url = null;
 
-    if (type === 'expense' && receipt) {
-      try {
-        const compressed = await imageCompression(receipt, {
-          maxSizeMB: 0.5,
-          maxWidthOrHeight: 1024,
-          useWebWorker: true,
-        });
+    if (receipt) {
+      const compressed = await imageCompression(receipt, { maxSizeMB: 0.5 });
+      const formData = new FormData();
+      formData.append('file', compressed);
 
-        const filePath = `receipts/${Date.now()}_${compressed.name}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('receipts')
-          .upload(filePath, compressed);
+      const uploadRes = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
 
-        if (!uploadError && uploadData?.path) {
-          receipt_url = uploadData.path;
-        } else {
-          alert('Receipt upload failed: ' + uploadError?.message);
-        }
-      } catch (err) {
-        console.error('Compression error:', err);
-        alert('Image compression failed.');
+      if (uploadRes.ok) {
+        const uploadData = await uploadRes.json();
+        receipt_url = uploadData.url;
+      } else {
+        alert('Failed to upload receipt');
+        return;
       }
     }
 
-    const response = await fetch('/api/entry', {
+    const res = await fetch('/api/entry', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        user_id: user.id,
-        tracker_id: trackerId,
-        type,
-        amount: parseFloat(amount),
-        note,
-        category,
-        receipt_url,
-        title: type === 'goals' ? note : undefined,
-        target_amount: type === 'goals' ? parseFloat(amount) : undefined,
-      }),
+      body: JSON.stringify({ tracker_id: trackerId, amount, category, note, receipt_url }),
     });
 
-    const result = await response.json();
-
-    if (response.ok) {
-      alert('Saved!');
+    if (res.ok) {
+      alert('Entry added successfully!');
       setAmount('');
-      setNote('');
       setCategory('');
+      setNote('');
       setReceipt(null);
     } else {
-      alert('Error: ' + result.error);
+      alert('Failed to add entry.');
     }
   };
 
   return (
-    <div style={{ marginTop: '1rem' }}>
-      <select value={type} onChange={(e) => setType(e.target.value)} style={{ marginBottom: '0.5rem' }}>
-        <option value="expense">Expense</option>
-        <option value="income">Income</option>
-        <option value="goals">Goal</option>
-      </select>
-      <br />
+    <div className="bg-white p-4 rounded shadow my-4">
       <input
         type="number"
         placeholder="Amount"
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
+        className="border rounded px-3 py-2 mb-2 w-full"
       />
-      <br />
       <input
-        type="text"
-        placeholder={type === 'goals' ? 'Goal Title' : 'Note'}
+        placeholder="Category"
+        value={category}
+        onChange={(e) => setCategory(e.target.value)}
+        className="border rounded px-3 py-2 mb-2 w-full"
+      />
+      <input
+        placeholder="Note (optional)"
         value={note}
         onChange={(e) => setNote(e.target.value)}
+        className="border rounded px-3 py-2 mb-2 w-full"
       />
-      <br />
 
-      {type === 'expense' && (
-        <>
-<select
-  value={category}
-  onChange={(e) => setCategory(e.target.value)}
-  style={{ marginTop: '0.5rem' }}
->
-  <option value="">Select Category</option>
-  {categories.map((cat) => (
-    <option key={cat.name} value={cat.name}>
-      {cat.emoji || '🟦'} {cat.name}
-    </option>
-  ))}
-</select>
+      <input
+        type="file"
+        accept="image/*"
+        onChange={(e) => setReceipt(e.target.files?.[0] || null)}
+        className="mb-4"
+      />
 
-          <br />
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setReceipt(e.target.files?.[0] || null)}
-            style={{ marginTop: '0.5rem' }}
-          />
-        </>
-      )}
-
-      <br />
-      <button onClick={handleSubmit} style={{ marginTop: '1rem' }}>
-        Submit
+      <button
+        onClick={handleSubmit}
+        className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition"
+      >
+        ✅ Submit
       </button>
     </div>
   );
