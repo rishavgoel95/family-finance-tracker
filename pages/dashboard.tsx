@@ -4,6 +4,7 @@ import AddForm from '../components/AddForm';
 import Charts from '../components/Charts';
 import Trends from '../components/Trends';
 import ExportData from '../components/ExportData';
+import Comments from '../components/Comments';
 import Reminders from '../components/Reminders';
 import CalendarView from '../components/CalendarView';
 import { useActiveTracker } from '../lib/useActiveTracker';
@@ -88,6 +89,7 @@ export default function Dashboard() {
       <Reminders />
       <CalendarView />
 <Charts />
+<Comments />
       <Trends />
       <ExportData />
     </div>
