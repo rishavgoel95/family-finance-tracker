@@ -23,9 +23,9 @@ export default function Start() {
           <button>🗂 Manage Categories</button>
         </Link>
 
-        <Link href="/calendar">
-          <button>📅 View Calendar</button>
-        </Link>
+<Link href="/calendar">
+  <button>📅 View Calendar</button>
+</Link>
 
         <Link href="/settings">
           <button>⚙️ Settings</button>
