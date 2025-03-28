@@ -1,31 +1,19 @@
-// ✅ File: pages/index.tsx (redirects to /start instead of /dashboard)
-
-import { useEffect } from 'react';
-import { supabase } from '../lib/supabase';
-import { useRouter } from 'next/router';
 import Link from 'next/link';
 
 export default function Home() {
-  const router = useRouter();
-
-  useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        router.push('/start');
-      }
-    };
-    checkSession();
-  }, [router]);
-
-  const handleLogin = async () => {
-    await supabase.auth.signInWithOAuth({ provider: 'google' });
-  };
-
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', flexDirection: 'column' }}>
-      <h1>Family Finance Tracker</h1>
-      <button onClick={handleLogin} style={{ marginBottom: '1rem' }}>Sign in with Google</button>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', flexDirection: 'column', fontFamily: 'sans-serif' }}>
+      <h1>📊 Family Finance Tracker</h1>
+
+      <a href="/api/auth/login">
+        <button style={{ padding: '0.75rem 1.5rem', fontSize: '1rem', marginTop: '1rem' }}>
+          🔐 Sign in with Google
+        </button>
+      </a>
+
+      <p style={{ fontSize: '0.9rem', marginTop: '1rem', color: '#666' }}>
+        Powered by Supabase + Vercel
+      </p>
     </div>
   );
 }
