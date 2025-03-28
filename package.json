@@ -14,7 +14,8 @@
     "recharts": "^2.7.2",
 "xlsx": "^0.18.5",
     "react-dom": "^18.2.0",
-    "browser-image-compression": "^2.0.2"
+    "browser-image-compression": "^2.0.2",
+"lucide-react": "^0.328.0"
    },
   "devDependencies": {
     "typescript": "^5.0.0",
