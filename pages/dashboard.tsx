@@ -7,6 +7,9 @@ import ExportData from '../components/ExportData';
 import Comments from '../components/Comments';
 import Reminders from '../components/Reminders';
 import CalendarView from '../components/CalendarView';
+import GoalProgress from '../components/GoalProgress';
+import BottomNavBar from '../components/BottomNavBar';
+import OverviewCard from '../components/OverviewCard';
 import { useActiveTracker } from '../lib/useActiveTracker';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -62,60 +65,64 @@ export default function Dashboard() {
   };
 
   if (!trackerId)
-    return (
-      <div className="p-4">
-        <p className="text-center text-red-500">⚠️ No tracker selected. Go to <Link href="/trackers" className="underline">Trackers</Link> to select one.</p>
-      </div>
-    );
+    return <p className="p-8">⚠️ No tracker selected. Go to <Link href="/trackers" className="text-indigo-500 underline">/trackers</Link> to select one.</p>;
 
   return (
-    <div className="p-4 max-w-7xl mx-auto">
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">📊 Family Dashboard</h1>
-        <div className="flex gap-2 mt-4 md:mt-0">
-          <Link href="/settings">
-            <button className="bg-gray-200 hover:bg-gray-300 rounded-lg px-4 py-2">⚙️ Settings</button>
-          </Link>
-          <button onClick={handleLogout} className="bg-red-400 hover:bg-red-500 text-white rounded-lg px-4 py-2">🚪 Logout</button>
+    <div className="bg-gray-100 min-h-screen pb-24">
+      <div className="container mx-auto p-4 md:p-8">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold">📊 Family Dashboard</h1>
+          <div>
+            <Link href="/settings">
+              <button className="bg-indigo-600 text-white py-2 px-4 rounded-lg shadow hover:bg-indigo-700 transition">⚙️ Settings</button>
+            </Link>
+            <button onClick={handleLogout} className="ml-2 bg-red-500 text-white py-2 px-4 rounded-lg shadow hover:bg-red-600 transition">🚪 Logout</button>
+          </div>
         </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <OverviewCard title="💰 Income" amount={income} color="green" />
+          <OverviewCard title="🧾 Expenses" amount={expenses} color="red" />
+          <OverviewCard title="💼 Net Worth" amount={netWorth} color="blue" />
+        </div>
+
+        <GoalProgress goal={goal} />
+
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className="mt-4 bg-indigo-500 text-white py-2 px-4 rounded-lg shadow hover:bg-indigo-600 transition"
+        >
+          {showForm ? 'Close' : '➕ Add New Entry'}
+        </button>
+
+        {showForm && <AddForm />}
+
+        <section className="my-6">
+          <Charts />
+        </section>
+
+        <section className="my-6">
+          <Trends />
+        </section>
+
+        <section className="my-6">
+          <CalendarView />
+        </section>
+
+        <section className="my-6">
+          <Reminders />
+        </section>
+
+        <section className="my-6">
+          <Comments />
+        </section>
+
+        <section className="my-6">
+          <ExportData />
+        </section>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-green-100 p-4 rounded-lg shadow">
-          <div className="text-xl font-semibold">💰 Income</div>
-          <div className="text-2xl font-bold">₹{income.toLocaleString()}</div>
-        </div>
-        <div className="bg-red-100 p-4 rounded-lg shadow">
-          <div className="text-xl font-semibold">🧾 Expenses</div>
-          <div className="text-2xl font-bold">₹{expenses.toLocaleString()}</div>
-        </div>
-        <div className="bg-blue-100 p-4 rounded-lg shadow">
-          <div className="text-xl font-semibold">🏁 Goal: {goal.title}</div>
-          <div className="text-2xl font-bold">{Math.round((goal.saved_amount / goal.target_amount) * 100 || 0)}% complete</div>
-        </div>
-        <div className="bg-yellow-100 p-4 rounded-lg shadow">
-          <div className="text-xl font-semibold">💼 Net Worth</div>
-          <div className="text-2xl font-bold">₹{netWorth.toLocaleString()}</div>
-        </div>
-      </div>
-
-      <button
-        onClick={() => setShowForm(!showForm)}
-        className="mb-6 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg px-4 py-2"
-      >
-        {showForm ? 'Close Form' : '➕ Add New Entry'}
-      </button>
-
-      {showForm && <AddForm />}
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Charts />
-        <CalendarView />
-        <Trends />
-        <Reminders />
-        <Comments />
-        <ExportData />
-      </div>
+      <BottomNavBar />
     </div>
   );
 }
