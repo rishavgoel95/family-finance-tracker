@@ -7,6 +7,7 @@ export default function TrackersPage() {
     <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
       <h1>📂 Your Trackers</h1>
       <TrackersList />
+<BottomNavBar />
     </div>
   );
 }
