@@ -1,16 +1,28 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { supabaseAdmin } from '../../lib/supabaseAdmin'; // backend client
+import { supabaseAdmin } from '../../lib/supabaseAdmin';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { user_id, tracker_id, type, amount, note, category, title, target_amount } = req.body;
+  const {
+    user_id,
+    tracker_id,
+    type,
+    amount,
+    note,
+    category,
+    receipt_url,
+    title,
+    target_amount,
+  } = req.body;
 
   if (!user_id || !tracker_id || !type || !amount) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
+
+  const table = type === 'expense' ? 'expenses' : type === 'income' ? 'income' : 'goals';
 
   let payload: any = {
     profile_id: tracker_id,
@@ -22,6 +34,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (type === 'expense') {
     payload.category = category;
+    payload.receipt_url = receipt_url;
   }
 
   if (type === 'goals') {
@@ -30,11 +43,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     payload.saved_amount = 0;
   }
 
-  const table = type === 'expense' ? 'expenses' : type === 'income' ? 'income' : 'goals';
-
   const { error } = await supabaseAdmin.from(table).insert([payload]);
 
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) {
+    console.error('Insert failed:', error.message);
+    return res.status(500).json({ error: error.message });
+  }
 
   return res.status(200).json({ message: 'Saved successfully' });
 }
