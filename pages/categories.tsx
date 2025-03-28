@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
 import { useActiveTracker } from '../lib/useActiveTracker';
+import BottomNavBar from '../components/BottomNavBar';
 
 export default function CategoriesPage() {
   const { trackerId } = useActiveTracker();
@@ -12,19 +12,12 @@ export default function CategoriesPage() {
     if (!trackerId) return;
 
     const res = await fetch('/api/categories', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tracker_id: trackerId }),
-    });
-
-    const getRes = await fetch('/api/categories', {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tracker_id: trackerId }),
+      headers: { 'Content-Type': 'application/json', 'tracker-id': trackerId },
     });
 
-    const data = await getRes.json();
-    if (getRes.ok) {
+    if (res.ok) {
+      const data = await res.json();
       setCategories(data);
     }
   };
@@ -54,45 +47,63 @@ export default function CategoriesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    // optional: secure delete route later
-    alert('Deleting via API not implemented yet.');
+    const res = await fetch('/api/categories', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tracker_id: trackerId, category_id: id }),
+    });
+
+    if (res.ok) {
+      fetchCategories();
+      alert('Category deleted!');
+    } else {
+      const err = await res.json();
+      alert('Error: ' + err.error);
+    }
   };
 
   return (
-    <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
-      <h1>🗂 Manage Categories</h1>
-      <div style={{ marginBottom: '1rem' }}>
+    <div className="p-6 bg-gray-50 min-h-screen pb-20 font-sans">
+      <h1 className="text-2xl font-bold mb-4">🗂 Manage Categories</h1>
+
+      <div className="mb-4 flex items-center">
         <input
           type="text"
           placeholder="Category name"
           value={newCat}
           onChange={(e) => setNewCat(e.target.value)}
+          className="p-2 border rounded flex-grow"
         />
         <input
           type="text"
-          placeholder="Emoji (optional)"
+          placeholder="Emoji"
           value={emoji}
           onChange={(e) => setEmoji(e.target.value)}
-          style={{ marginLeft: '0.5rem', width: '4rem' }}
+          className="p-2 border rounded ml-2 w-20"
         />
-        <button onClick={handleAdd} style={{ marginLeft: '0.5rem' }}>
+        <button onClick={handleAdd} className="ml-2 bg-blue-500 text-white rounded px-4 py-2">
           Add
         </button>
       </div>
 
-      <ul>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {categories.map((cat) => (
-          <li key={cat.id} style={{ marginBottom: '0.5rem' }}>
-            {cat.emoji || '🟦'} {cat.name}
+          <div key={cat.id} className="flex items-center justify-between p-4 bg-white rounded-lg shadow">
+            <span className="flex items-center space-x-2">
+              <span className="text-xl">{cat.emoji || '📌'}</span>
+              <span>{cat.name}</span>
+            </span>
             <button
               onClick={() => handleDelete(cat.id)}
-              style={{ marginLeft: '1rem' }}
+              className="text-red-500 hover:text-red-700 transition"
             >
-              ❌ Delete
+              ❌
             </button>
-          </li>
+          </div>
         ))}
-      </ul>
+      </div>
+
+      <BottomNavBar />
     </div>
   );
 }
