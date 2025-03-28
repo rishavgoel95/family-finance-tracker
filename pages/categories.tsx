@@ -8,43 +8,54 @@ export default function CategoriesPage() {
   const [newCat, setNewCat] = useState('');
   const [emoji, setEmoji] = useState('');
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      if (!trackerId) return;
-      const { data } = await supabase
-        .from('categories')
-        .select('*')
-        .eq('profile_id', trackerId)
-        .order('created_at', { ascending: true });
-      setCategories(data || []);
-    };
+  const fetchCategories = async () => {
+    if (!trackerId) return;
 
+    const res = await fetch('/api/categories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tracker_id: trackerId }),
+    });
+
+    const getRes = await fetch('/api/categories', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tracker_id: trackerId }),
+    });
+
+    const data = await getRes.json();
+    if (getRes.ok) {
+      setCategories(data);
+    }
+  };
+
+  useEffect(() => {
     fetchCategories();
   }, [trackerId]);
 
   const handleAdd = async () => {
     if (!newCat || !trackerId) return;
-    const { error } = await supabase.from('categories').insert({
-      profile_id: trackerId,
-      name: newCat,
-      emoji,
+
+    const res = await fetch('/api/categories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tracker_id: trackerId, name: newCat, emoji }),
     });
-    if (!error) {
+
+    if (res.ok) {
       setNewCat('');
       setEmoji('');
+      fetchCategories();
       alert('Category added!');
-      const { data } = await supabase
-        .from('categories')
-        .select('*')
-        .eq('profile_id', trackerId)
-        .order('created_at', { ascending: true });
-      setCategories(data || []);
+    } else {
+      const err = await res.json();
+      alert('Error: ' + err.error);
     }
   };
 
   const handleDelete = async (id: string) => {
-    await supabase.from('categories').delete().eq('id', id);
-    setCategories((prev) => prev.filter((cat) => cat.id !== id));
+    // optional: secure delete route later
+    alert('Deleting via API not implemented yet.');
   };
 
   return (
