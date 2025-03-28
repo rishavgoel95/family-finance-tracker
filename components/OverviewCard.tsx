@@ -1,18 +1,19 @@
-interface OverviewCardProps {
+import React from 'react';
+
+export interface OverviewCardProps {
   title: string;
-  amount: number;
-  icon: string;
-  color?: string;
+  value: string;
+  emoji?: string;
 }
 
-export default function OverviewCard({ title, amount, icon, color = 'bg-blue-100' }: OverviewCardProps) {
+export default function OverviewCard({ title, value, emoji = '📌' }: OverviewCardProps) {
   return (
-    <div className={`flex items-center p-4 rounded-2xl shadow-md ${color}`}>
-      <span className="text-3xl mr-4">{icon}</span>
-      <div>
-        <p className="text-sm text-gray-600">{title}</p>
-        <p className="text-xl font-bold">₹{amount.toLocaleString()}</p>
+    <div className="bg-white rounded-lg shadow-md p-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold">{title}</h2>
+        <span className="text-2xl">{emoji}</span>
       </div>
+      <p className="text-3xl font-bold">{value}</p>
     </div>
   );
 }
